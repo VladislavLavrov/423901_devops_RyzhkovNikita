@@ -1,8 +1,6 @@
-﻿version: '3.8'
-
-services:
+﻿services:
   mariadb:
-    container_name: web-mariadb-3
+    container_name: web-mariadb-13
     hostname: mariadb
     image: mariadb:10.5
     restart: always
@@ -12,7 +10,7 @@ services:
       MARIADB_USER: webdb
       MARIADB_PASSWORD: password
     ports:
-      - "5113:3306"
+      - "5003:3306"
 
 
   web:
