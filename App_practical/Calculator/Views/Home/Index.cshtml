@@ -1,11 +1,11 @@
-﻿@model Calculator.Models.CalculatorModel
+﻿@model CalculatorApp.Models.CalculatorModel
 
 @{
     ViewData["Title"] = "Калькулятор";
 }
 
 <div class="container mt-5">
-    <div class="row justify-content-center">
+    <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-primary text-white">
@@ -58,12 +58,50 @@
                 </div>
             </div>
         </div>
+
+        <!-- История вычислений -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="text-center">История вычислений</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    @if (Model.History != null && Model.History.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var item in Model.History)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            @if (item.Operation == "sqrt")
+                                            {
+                                                <text>√@item.Operand1 = @item.Result</text>
+                                            }
+                                            else
+                                            {
+                                                <text>@item.Operand1 @item.Operation @item.Operand2 = @item.Result</text>
+                                            }
+                                        </h6>
+                                        <small>@item.CreatedAt.ToLocalTime().ToString("g")</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">История вычислений пуста</p>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const operationSelect = document.getElementById('Operation');
             const secondNumberGroup = document.getElementById('secondNumberGroup');
 
@@ -76,7 +114,7 @@
             }
 
             operationSelect.addEventListener('change', toggleSecondNumber);
-            toggleSecondNumber(); 
+            toggleSecondNumber();
         });
     </script>
 }
