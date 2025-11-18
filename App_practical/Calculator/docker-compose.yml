@@ -6,15 +6,15 @@ services:
   restart: always
   environment:
    MARIADB_ROOT_PASSWORD: password
-   MARIADB_DATABASE: webdb
-   MARIADB_USER: webdb
+   MARIADB_DATABASE: 13-WebCalculatorDb
+   MARIADB_USER: root
    MARIADB_PASSWORD: password
   ports:
-   - "0.0.0.0:5113:3306"
+   - "5113:3306"
 
  web:
   container_name: web-app-calculator-13
   hostname: app
   build: .
   ports:
-   - "0.0.0.0:5013:5013"
+   - "5013:5013"
