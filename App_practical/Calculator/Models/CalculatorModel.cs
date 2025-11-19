@@ -1,6 +1,4 @@
-﻿using CalculatorApp.Models;
-
-namespace CalculatorApp.Models
+﻿namespace Calculator.Models
 {
     public class CalculatorModel
     {
@@ -9,7 +7,6 @@ namespace CalculatorApp.Models
         public string Operation { get; set; } = "+";
         public double Result { get; set; }
         public string ErrorMessage { get; set; } = string.Empty;
-        public List<CalculationHistory>? History { get; set; }
 
         public void Calculate()
         {
