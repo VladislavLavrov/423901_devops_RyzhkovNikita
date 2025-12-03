@@ -1,7 +1,9 @@
-using CalculatorApp.Data;
-using CalculatorApp.Models;
+using Calculator.Data;
+using Calculator.Models;
+using Calculator.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace CalculatorApp.Controllers
 {
@@ -9,11 +11,13 @@ namespace CalculatorApp.Controllers
     {
         private readonly CalculatorContext _context;
         private readonly ILogger<HomeController> _logger;
+        private readonly KafkaProducerService _kafkaProducer;
 
-        public HomeController(CalculatorContext context, ILogger<HomeController> logger)
+        public HomeController(CalculatorContext context, ILogger<HomeController> logger, KafkaProducerService kafkaProducer)
         {
             _context = context;
             _logger = logger;
+            _kafkaProducer = kafkaProducer;
         }
 
         public async Task<IActionResult> Index()
@@ -25,6 +29,7 @@ namespace CalculatorApp.Controllers
                     .Take(10)
                     .ToListAsync()
             };
+
             return View(model);
         }
 
@@ -39,6 +44,9 @@ namespace CalculatorApp.Controllers
                 if (string.IsNullOrEmpty(model.ErrorMessage))
                 {
                     await SaveToHistory(model);
+
+                    // Отправляем событие в Kafka
+                    await SendCalculationEvent(model);
                 }
             }
 
@@ -59,7 +67,7 @@ namespace CalculatorApp.Controllers
                 {
                     Operand1 = model.FirstNumber,
                     Operation = model.Operation,
-                    Operand2 = model.Operation == "sqrt" ? null : model.SecondNumber,
+                    Operand2 = model.Operation == "sqrt" ? (double?)null : model.SecondNumber,
                     Result = model.Result,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -70,6 +78,28 @@ namespace CalculatorApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving calculation history");
+            }
+        }
+
+        private async Task SendCalculationEvent(CalculatorModel model)
+        {
+            try
+            {
+                var message = new CalculationMessage
+                {
+                    Operation = model.Operation,
+                    Operand1 = model.FirstNumber,
+                    Operand2 = model.Operation == "sqrt" ? null : model.SecondNumber,
+                    Result = model.Result,
+                    Timestamp = DateTime.UtcNow
+                };
+
+                await _kafkaProducer.ProduceAsync("calculator-events", message.ToJson());
+                _logger.LogInformation($"Calculation event sent to Kafka: {message.Operation}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending calculation event to Kafka");
             }
         }
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace CalculatorApp.Models
+namespace Calculator.Models
 {
     public class CalculationHistory
     {
@@ -14,7 +14,7 @@ namespace CalculatorApp.Models
         [Required]
         public string Operation { get; set; } = string.Empty;
 
-        public double? Operand2 { get; set; }
+        public double? Operand2 { get; set; } // Оставить как nullable
 
         [Required]
         public double Result { get; set; }

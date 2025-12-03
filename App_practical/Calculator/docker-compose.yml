@@ -1,20 +1,57 @@
 services:
- mariadb:
-  container_name: web-mariadb-13
-  hostname: mariadb
-  image: mariadb:10.5
-  restart: always
-  environment:
-   MARIADB_ROOT_PASSWORD: password
-   MARIADB_DATABASE: 13-WebCalculatorDb
-   MARIADB_USER: root
-   MARIADB_PASSWORD: password
-  ports:
-   - "5113:3306"
+  mariadb:
+    container_name: web-mariadb-13
+    image: mariadb:10.5 
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: 13-WebCalculatorDb
+    ports:
+      - "5113:3306"
+    networks:
+      - app-network
 
- web:
-  container_name: web-app-calculator-13
-  hostname: app
-  build: .
-  ports:
-   - "5013:5013"
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.1
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-13
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+    networks:
+      - app-network
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8082:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
+
+  web:
+    container_name: web-app-calculator-13
+    build: .
+    ports:
+      - "5013:5013"
+    depends_on:
+      - kafka
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

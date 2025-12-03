@@ -1,6 +1,6 @@
-﻿using CalculatorApp.Models;
+﻿using Calculator.Models;
 
-namespace CalculatorApp.Models
+namespace Calculator.Models
 {
     public class CalculatorModel
     {

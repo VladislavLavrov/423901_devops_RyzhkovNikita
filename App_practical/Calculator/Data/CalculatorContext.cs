@@ -1,7 +1,7 @@
-﻿using CalculatorApp.Models;
+﻿using Calculator.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CalculatorApp.Data
+namespace Calculator.Data
 {
     public class CalculatorContext : DbContext
     {
