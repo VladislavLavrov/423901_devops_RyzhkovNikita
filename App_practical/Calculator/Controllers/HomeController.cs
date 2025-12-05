@@ -94,7 +94,7 @@ namespace CalculatorApp.Controllers
                     Timestamp = DateTime.UtcNow
                 };
 
-                await _kafkaProducer.ProduceAsync("calculator-events", message.ToJson());
+                await _kafkaProducer.ProduceAsync("calculator-ryzhkov", message.ToJson());
                 _logger.LogInformation($"Calculation event sent to Kafka: {message.Operation}");
             }
             catch (Exception ex)

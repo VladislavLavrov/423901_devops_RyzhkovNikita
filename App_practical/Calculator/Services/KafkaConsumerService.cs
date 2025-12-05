@@ -27,7 +27,7 @@ namespace Calculator.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _consumer.Subscribe("calculator-events");
+            _consumer.Subscribe("calculator-ryzhkov");
 
             while (!stoppingToken.IsCancellationRequested)
             {
