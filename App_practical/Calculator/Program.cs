@@ -25,6 +25,22 @@ builder.Services.AddHostedService<KafkaConsumerService>();
 
 var app = builder.Build();
 
+// Логирование конфигурации Kafka
+var kafkaBootstrapServers = builder.Configuration["Kafka:ConsumerSettings:BootstrapServers"];
+var kafkaGroupId = builder.Configuration["Kafka:ConsumerSettings:GroupId"];
+var kafkaTopic = builder.Configuration["Kafka:TopicName"];
+
+Console.WriteLine($"=== Kafka Configuration ===");
+Console.WriteLine($"BootstrapServers: {kafkaBootstrapServers}");
+Console.WriteLine($"GroupId: {kafkaGroupId}");
+Console.WriteLine($"Topic: {kafkaTopic}");
+
+if (string.IsNullOrEmpty(kafkaGroupId))
+{
+    Console.WriteLine("❌ ERROR: Kafka GroupId is not configured!");
+    throw new ArgumentException("Kafka GroupId must be specified in configuration");
+}
+
 // Apply migrations automatically
 using (var scope = app.Services.CreateScope())
 {
