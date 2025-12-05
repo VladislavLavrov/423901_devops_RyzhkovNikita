@@ -17,12 +17,14 @@ namespace Calculator.Services
 
             var consumerConfig = new ConsumerConfig
             {
-                BootstrapServers = configuration["Kafka:BootstrapServers"],
-                GroupId = configuration["Kafka:GroupId"],
-                AutoOffsetReset = AutoOffsetReset.Earliest
+                BootstrapServers = configuration["Kafka:ConsumerSettings:BootstrapServers"],
+                GroupId = configuration["Kafka:ConsumerSettings:GroupId"], 
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                EnableAutoOffsetStore = false
             };
 
             _consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
+            _logger.LogInformation($"Kafka Consumer initialized for group: {consumerConfig.GroupId}");
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
