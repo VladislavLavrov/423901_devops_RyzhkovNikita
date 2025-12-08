@@ -7,7 +7,18 @@ pipeline {
                 echo 'Hello jenkins'
             }
         }
-        
+		
+        stage('Navigate to project directory'){
+			steps{
+				script {
+                    if (isUnix()) {
+                        sh 'cd App_practical/Calculator'
+                    } else {
+                        bat 'cd App_practical/Calculator'
+                    }
+                }
+			}
+		}
         stage('Build Docker Image') {
             steps {
                 script {
