@@ -8,26 +8,19 @@ pipeline {
             }
         }
 		
-        stage('Navigate to project directory'){
-			steps{
-				script {
-                    if (isUnix()) {
-                        sh 'cd App_practical/Calculator'
-                    } else {
-                        bat 'cd App_practical/Calculator'
-                    }
-                }
-			}
-		}
         stage('Build Docker Image') {
             steps {
                 script {
                     if (isUnix()) {
-                        sh 'ls -l'
-                        sh 'docker compose build'
+						dir('App_practical/Calculator'){
+							sh 'ls -l'
+							sh 'docker compose build'
+						}
                     } else {
-                        bat 'dir'
-                        bat 'docker compose build'
+						dir('App_practical/Calculator')
+							bat 'dir'
+							bat 'docker compose build'
+						}
                     }
                 }
             }
@@ -37,9 +30,13 @@ pipeline {
             steps {
                 script {
                     if (isUnix()) {
-                        sh 'docker compose up -d'
+						dir('App_practical/Calculator'){
+							sh 'docker compose up -d'
+						}
                     } else {
-                        bat 'docker compose up -d'
+						dir('App_practical/Calculator'){
+							bat 'docker compose up -d'
+						}
                     }
                 }
             }
