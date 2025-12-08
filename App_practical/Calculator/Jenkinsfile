@@ -7,20 +7,20 @@ pipeline {
                 echo 'Hello jenkins'
             }
         }
-		
+        
         stage('Build Docker Image') {
             steps {
                 script {
                     if (isUnix()) {
-						dir('App_practical/Calculator'){
-							sh 'ls -l'
-							sh 'docker compose build'
-						}
+                        dir('App_practical/Calculator') {
+                            sh 'ls -l'
+                            sh 'docker compose build'
+                        }
                     } else {
-						dir('App_practical/Calculator')
-							bat 'dir'
-							bat 'docker compose build'
-						}
+                        dir('App_practical/Calculator') {
+                            bat 'dir'
+                            bat 'docker compose build'
+                        }
                     }
                 }
             }
@@ -30,13 +30,13 @@ pipeline {
             steps {
                 script {
                     if (isUnix()) {
-						dir('App_practical/Calculator'){
-							sh 'docker compose up -d'
-						}
+                        dir('App_practical/Calculator') {
+                            sh 'docker compose up -d'
+                        }
                     } else {
-						dir('App_practical/Calculator'){
-							bat 'docker compose up -d'
-						}
+                        dir('App_practical/Calculator') {
+                            bat 'docker compose up -d'
+                        }
                     }
                 }
             }
