@@ -1,26 +1,37 @@
 pipeline {
- agent {
-  docker {
-   image 'docker:latest'
-   args '-v /var/run/docker.sock:/var/run/docker.sock'
-  }
- }
- stages {
-  stage('Hello') {
-   steps {
-    echo 'Hello jenkins'
-   }
-  }
-  stage('Build Docker Image') {
-   steps {
-    sh 'ls -l'
-    sh 'docker compose build'
-   }
-  }
-  stage('Start Docker Container') {
-   steps {
-    sh 'docker compose up -d'
-   }
-  }
- }
+    agent any
+    
+    stages {
+        stage('Hello') {
+            steps {
+                echo 'Hello jenkins'
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh 'ls -l'
+                        sh 'docker compose build'
+                    } else {
+                        bat 'dir'
+                        bat 'docker compose build'
+                    }
+                }
+            }
+        }
+        
+        stage('Start Docker Container') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh 'docker compose up -d'
+                    } else {
+                        bat 'docker compose up -d'
+                    }
+                }
+            }
+        }
+    }
 }
