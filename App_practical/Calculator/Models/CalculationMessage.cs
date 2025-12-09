@@ -7,10 +7,10 @@ namespace Calculator.Models
     {
         public string Operation { get; set; } = string.Empty;
 
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public double Operand1 { get; set; }
 
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public double? Operand2 { get; set; }
 
         public double Result { get; set; }

@@ -25,7 +25,7 @@ builder.Services.AddHttpClient();
 
 // Add Kafka services like in the example
 builder.Services.AddSingleton<KafkaProducerHandler>();
-builder.Services.AddSingleton<KafkaProducerService<Null, string>>();
+builder.Services.AddSingleton<KafkaProducerService>();
 builder.Services.AddHostedService<KafkaConsumerService>();
 
 var app = builder.Build();
