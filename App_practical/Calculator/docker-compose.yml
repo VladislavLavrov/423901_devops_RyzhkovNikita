@@ -20,7 +20,7 @@ services:
     container_name: web-app-calculator-13
     build: .
     ports:
-      - "5015:5015"
+      - "5013:5013"
     depends_on:
       mariadb:
         condition: service_healthy
