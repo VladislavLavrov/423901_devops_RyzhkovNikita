@@ -47,7 +47,7 @@
                         <div class="alert @(string.IsNullOrEmpty(Model.ErrorMessage) ? "alert-success" : "alert-danger") mt-3">
                             @if (string.IsNullOrEmpty(Model.ErrorMessage))
                             {
-                                <h5>Результат: @Model.Result</h5>
+                                <h5>Результат операции: @Model.Result</h5>
                             }
                             else
                             {
