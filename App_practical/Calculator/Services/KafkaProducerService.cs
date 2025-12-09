@@ -20,7 +20,7 @@ namespace Calculator.Services
             };
 
             _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
-            _topic = configuration["Kafka:TopicName"] ?? "Ryzhkov";
+            _topic = configuration["Kafka:TopicName"] ?? "calculator-ryzhkov";
 
             _logger.LogInformation($"Kafka Producer initialized for topic: {_topic}");
         }
