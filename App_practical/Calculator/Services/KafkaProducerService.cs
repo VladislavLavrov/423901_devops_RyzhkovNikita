@@ -1,42 +1,25 @@
 ﻿using Confluent.Kafka;
+using System;
+using System.Threading.Tasks;
 
 namespace Calculator.Services
 {
-    public class KafkaProducerService
+    public class KafkaProducerService<K, V>
     {
-        private readonly IProducer<Null, string> _producer;
-        private readonly ILogger<KafkaProducerService> _logger;
+        IProducer<K, V> kafkaHandle;
 
-        public KafkaProducerService(IConfiguration configuration, ILogger<KafkaProducerService> logger)
+        public KafkaProducerService(KafkaProducerHandler handle)
         {
-            _logger = logger;
-
-            var producerConfig = new ProducerConfig
-            {
-                BootstrapServers = configuration["Kafka:BootstrapServers"]
-            };
-
-            _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
+            kafkaHandle = new DependentProducerBuilder<K, V>(handle.Handle).Build();
         }
 
-        public async Task ProduceAsync(string topic, string message)
-        {
-            try
-            {
-                var result = await _producer.ProduceAsync(topic, new Message<Null, string> { Value = message });
-                _logger.LogInformation($"Message delivered to {result.TopicPartitionOffset}");
-            }
-            catch (ProduceException<Null, string> ex)
-            {
-                _logger.LogError($"Delivery failed: {ex.Error.Reason}");
-                throw;
-            }
-        }
+        public Task ProduceAsync(string topic, Message<K, V> message)
+            => kafkaHandle.ProduceAsync(topic, message);
 
-        public void Dispose()
-        {
-            _producer?.Flush();
-            _producer?.Dispose();
-        }
+        public void Produce(string topic, Message<K, V> message, Action<DeliveryReport<K, V>> deliveryHandler = null)
+            => kafkaHandle.Produce(topic, message, deliveryHandler);
+
+        public void Flush(TimeSpan timeout)
+            => kafkaHandle.Flush(timeout);
     }
 }

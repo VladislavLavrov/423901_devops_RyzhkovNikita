@@ -1,5 +1,6 @@
 ﻿using Calculator.Data;
 using Calculator.Services;
+using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,8 +20,12 @@ builder.Services.AddDbContext<CalculatorContext>(options =>
             errorNumbersToAdd: null)
     ));
 
-// Add Kafka services
-builder.Services.AddSingleton<KafkaProducerService>();
+// Add HttpClient for callback
+builder.Services.AddHttpClient();
+
+// Add Kafka services like in the example
+builder.Services.AddSingleton<KafkaProducerHandler>();
+builder.Services.AddSingleton<KafkaProducerService<Null, string>>();
 builder.Services.AddHostedService<KafkaConsumerService>();
 
 var app = builder.Build();
@@ -34,12 +39,6 @@ Console.WriteLine($"=== Kafka Configuration ===");
 Console.WriteLine($"BootstrapServers: {kafkaBootstrapServers}");
 Console.WriteLine($"GroupId: {kafkaGroupId}");
 Console.WriteLine($"Topic: {kafkaTopic}");
-
-if (string.IsNullOrEmpty(kafkaGroupId))
-{
-    Console.WriteLine("❌ ERROR: Kafka GroupId is not configured!");
-    throw new ArgumentException("Kafka GroupId must be specified in configuration");
-}
 
 // Apply migrations automatically
 using (var scope = app.Services.CreateScope())

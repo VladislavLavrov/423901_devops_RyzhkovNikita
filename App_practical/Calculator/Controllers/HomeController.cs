@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
-namespace CalculatorApp.Controllers
+namespace Calculator.Controllers
 {
     public class HomeController : Controller
     {
@@ -13,7 +13,10 @@ namespace CalculatorApp.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly KafkaProducerService _kafkaProducer;
 
-        public HomeController(CalculatorContext context, ILogger<HomeController> logger, KafkaProducerService kafkaProducer)
+        public HomeController(
+            CalculatorContext context,
+            ILogger<HomeController> logger,
+            KafkaProducerService kafkaProducer)
         {
             _context = context;
             _logger = logger;
@@ -94,12 +97,33 @@ namespace CalculatorApp.Controllers
                     Timestamp = DateTime.UtcNow
                 };
 
-                await _kafkaProducer.ProduceAsync("calculator-ryzhkov", message.ToJson());
-                _logger.LogInformation($"Calculation event sent to Kafka: {message.Operation}");
+                var jsonMessage = JsonSerializer.Serialize(message);
+                await _kafkaProducer.ProduceAsync(jsonMessage);
+
+                _logger.LogInformation($"Calculation event sent to Kafka: {model.Operation}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending calculation event to Kafka");
+            }
+        }
+
+        [HttpPost]
+        public IActionResult Callback([FromBody] CalculationMessage inputData)
+        {
+            try
+            {
+                _logger.LogInformation($"Callback received: {inputData.Operation} = {inputData.Result}");
+
+                // «десь можно обработать данные, полученные от консьюмера
+                // Ќапример, сохранить в другую таблицу или обновить UI
+
+                return Ok(new { success = true, message = "Callback processed" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in Callback method");
+                return StatusCode(500, new { success = false, error = ex.Message });
             }
         }
 

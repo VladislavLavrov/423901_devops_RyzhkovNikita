@@ -1,82 +1,97 @@
 ﻿using Confluent.Kafka;
 using Calculator.Models;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Calculator.Controllers;
+using Calculator.Data;
+using Microsoft.Extensions.DependencyInjection;
+using System.Net.Http;
 
 namespace Calculator.Services
 {
     public class KafkaConsumerService : BackgroundService
     {
-        private readonly IConsumer<Ignore, string> _consumer;
-        private readonly ILogger<KafkaConsumerService> _logger;
+        private readonly string _topic;
+        private readonly IConsumer<Null, string> _kafkaConsumer;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IHttpClientFactory _clientFactory;
 
-        public KafkaConsumerService(IConfiguration configuration, ILogger<KafkaConsumerService> logger, IServiceProvider serviceProvider)
+        public KafkaConsumerService(IConfiguration config, IServiceProvider serviceProvider, IHttpClientFactory clientFactory)
         {
-            _logger = logger;
+            var consumerConfig = new ConsumerConfig();
+            config.GetSection("Kafka:ConsumerSettings").Bind(consumerConfig);
+            _topic = config.GetValue<string>("Kafka:TopicName") ?? "Ryzhkov";
+            _kafkaConsumer = new ConsumerBuilder<Null, string>(consumerConfig).Build();
             _serviceProvider = serviceProvider;
-
-            var consumerConfig = new ConsumerConfig
-            {
-                BootstrapServers = configuration["Kafka:ConsumerSettings:BootstrapServers"],
-                GroupId = configuration["Kafka:ConsumerSettings:GroupId"], 
-                AutoOffsetReset = AutoOffsetReset.Earliest,
-                EnableAutoOffsetStore = false
-            };
-
-            _consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
-            _logger.LogInformation($"Kafka Consumer initialized for group: {consumerConfig.GroupId}");
+            _clientFactory = clientFactory;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _consumer.Subscribe("calculator-ryzhkov");
+            return Task.Run(() => StartConsumerLoop(stoppingToken), stoppingToken);
+        }
 
-            while (!stoppingToken.IsCancellationRequested)
+        private async Task StartConsumerLoop(CancellationToken cancellationToken)
+        {
+            _kafkaConsumer.Subscribe(_topic);
+
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    var consumeResult = _consumer.Consume(stoppingToken);
+                    var cr = _kafkaConsumer.Consume(cancellationToken);
 
-                    if (consumeResult != null)
+                    // Десериализация сообщения
+                    var inputData = JsonSerializer.Deserialize<CalculationMessage>(cr.Message.Value);
+
+                    if (inputData != null)
                     {
-                        await ProcessMessage(consumeResult.Message.Value);
-                        _logger.LogInformation($"Received message: {consumeResult.Message.Value}");
+                        // Логируем полученное сообщение
+                        Console.WriteLine($"Message received: {cr.Message.Value}");
+
+                        // Создаем HTTP клиент для callback
+                        var httpClient = _clientFactory.CreateClient();
+
+                        // Отправляем данные обратно через callback
+                        // Измените порт на свой (5013)
+                        var response = await httpClient.PostAsJsonAsync($"http://localhost:5013/Home/Callback", inputData);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine("Callback successful");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Callback failed: {response.StatusCode}");
+                        }
                     }
                 }
-                catch (ConsumeException ex)
+                catch (OperationCanceledException)
                 {
-                    _logger.LogError($"Error consuming message: {ex.Error.Reason}");
+                    break;
                 }
-                catch (Exception ex)
+                catch (ConsumeException e)
                 {
-                    _logger.LogError($"Unexpected error: {ex.Message}");
+                    Console.WriteLine($"Consume error: {e.Error.Reason}");
+                    if (e.Error.IsFatal)
+                    {
+                        break;
+                    }
                 }
-            }
-        }
-
-        private async Task ProcessMessage(string messageJson)
-        {
-            try
-            {
-                var calculationMessage = JsonSerializer.Deserialize<CalculationMessage>(messageJson);
-
-                if (calculationMessage != null)
+                catch (Exception e)
                 {
-                    // Здесь можно добавить дополнительную обработку сообщений
-                    // Например, сохранение в отдельную таблицу или отправку уведомлений
-                    _logger.LogInformation($"Processed calculation: {calculationMessage.Operation} = {calculationMessage.Result}");
+                    Console.WriteLine($"Unexpected error: {e.Message}");
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error processing message: {ex.Message}");
             }
         }
 
         public override void Dispose()
         {
-            _consumer?.Close();
-            _consumer?.Dispose();
+            _kafkaConsumer.Close();
+            _kafkaConsumer.Dispose();
             base.Dispose();
         }
     }
