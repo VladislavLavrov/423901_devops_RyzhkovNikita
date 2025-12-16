@@ -1,24 +1,56 @@
-﻿services:
- web:
-  container_name: web-app-calculator-jenkins-13
-  hostname: app
-  build: .
-  ports:
-   - "0.0.0.0:5013:5013"
- prometheus:
-  image: prom/prometheus:latest
-  user: root
-  volumes:
-   - ./prometheus/config/:/etc/prometheus/
-   - ./prometheus/data:/prometheus:rw
-  command:
-   - '--config.file=/etc/prometheus/prometheus.yml'
-   - '--storage.tsdb.path=/prometheus'
-  ports:
-   - 9090:9090
-  networks:
-   - metrics-net
+version: '3.8'
+
+services:
+  web:
+    container_name: web-app-calculator-13
+    hostname: app
+    build: .
+    ports:
+      - "0.0.0.0:5013:5013"
+    networks:
+      - metrics-net-13
+
+  prometheus:
+    image: prom/prometheus:latest
+    user: root
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/config/:/etc/prometheus/
+      - ./prometheus/data:/prometheus:rw
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9113:9090"
+    depends_on:
+      - web
+    networks:
+      - metrics-net-13
+
+  renderer:
+    image: grafana/grafana-image-renderer:latest
+    ports:
+      - "9013:8081"
+    networks:
+      - metrics-net-13
+
+  grafana:
+    image: grafana/grafana:latest
+    user: root
+    depends_on:
+      - prometheus
+      - renderer
+    ports:
+      - "3013:3000"
+    volumes:
+      - ./grafana/data:/var/lib/grafana:rw
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+      GF_LOG_FILTERS: rendering:debug
+    networks:
+      - metrics-net-13
 
 networks:
- metrics-net:
-  name: metrics-net
+  metrics-net-13:
+    name: metrics-net-13
