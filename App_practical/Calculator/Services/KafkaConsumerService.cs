@@ -55,8 +55,6 @@ namespace Calculator.Services
                         // Создаем HTTP клиент для callback
                         var httpClient = _clientFactory.CreateClient();
 
-                        // Отправляем данные обратно через callback
-                        // Измените порт на свой (5013)
                         var response = await httpClient.PostAsJsonAsync($"http://localhost:5013/Home/Callback", inputData);
 
                         if (response.IsSuccessStatusCode)
